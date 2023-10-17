@@ -76,8 +76,24 @@ class FlutterDropzoneView {
     if (mime.isNotEmpty) picker.accept = mime.join(',');
     picker.onChange.listen((_) {
       completer.complete(picker.files);
-      if (isSafari) picker.remove();
+      picker.remove();
     });
+
+    void cancelledEventListener(Event e) {
+      window.removeEventListener('focus', cancelledEventListener);
+
+      // This listener is called before the input changed event,
+      // and the `uploadInput.files` value is still null
+      // Wait for results from js to dart
+      Future.delayed(Duration(milliseconds: 500)).then((value) {
+        if (picker.files?.isEmpty ?? true) {
+          completer.complete([]);
+          picker.remove();
+        }
+      });
+    }
+
+    window.addEventListener('focus', cancelledEventListener);
     picker.click();
     return completer.future;
   }
@@ -120,6 +136,17 @@ class FlutterDropzoneView {
   Stream<List<int>> getFileStream(File file) async* {
     const int chunkSize = 1024 * 1024;
     final reader = FileReader();
+    reader.onError.listen((event) {
+      FlutterDropzonePlatform.instance.events
+          .add(DropzoneErrorEvent(viewId, event.toString()));
+    });
+    reader.onAbort.listen((event) {
+      FlutterDropzonePlatform.instance.events
+          .add(DropzoneErrorEvent(viewId, event.toString()));
+    });
+    reader.onLoadEnd.listen((event) {
+      print('onload end');
+    });
     int start = 0;
     while (start < file.size) {
       final end = start + chunkSize > file.size ? file.size : start + chunkSize;
