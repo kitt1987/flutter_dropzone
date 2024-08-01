@@ -1,4 +1,6 @@
 if (typeof FlutterDropzone === 'undefined') {
+const supportsWebkitGetAsEntry =
+  "webkitGetAsEntry" in DataTransferItem.prototype;
 class FlutterDropzone {
   constructor(container, onLoaded, onError, onHover, onDrop, onDropInvalid, onDropMultiple, onLeave) {
     this.onError = onError;
@@ -50,9 +52,20 @@ class FlutterDropzone {
         switch (item.kind) {
           case "file":
             if (this.dropMIME == null || this.dropMIME.includes(item.type)) {
-              var file = item.getAsFile();
-              if (this.onDrop != null) this.onDrop(event, file);
-              files.push(file);
+              if (supportsWebkitGetAsEntry) {
+                var handle = item.webkitGetAsEntry();
+                if (handle.isDirectory) {
+                  if (this.onDropInvalid != null) this.onDropInvalid(event, "directory");
+                } else {
+                  var file = item.getAsFile();
+                  if (this.onDrop != null) this.onDrop(event, file);
+                  files.push(file);
+                }
+              } else {
+                var file = item.getAsFile();
+                if (this.onDrop != null) this.onDrop(event, file);
+                files.push(file);
+              }
             }
             else {
               if (this.onDropInvalid != null) this.onDropInvalid(event, item.type);
