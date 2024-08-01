@@ -3,6 +3,7 @@ library flutter_dropzone_web;
 
 import 'dart:async';
 import 'dart:js_interop';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dropzone_platform_interface/flutter_dropzone_platform_interface.dart';
@@ -137,7 +138,7 @@ class FlutterDropzoneView {
       final blob = file.slice(start, end);
       reader.readAsArrayBuffer(blob);
       await reader.onLoadEnd.first; //???
-      yield reader.result as List<int>;
+      yield (reader.result as ByteBuffer).asInt8List().toList();
       start += chunkSize;
     }
   }

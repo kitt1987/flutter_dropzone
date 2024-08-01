@@ -51,8 +51,13 @@ class _MyAppState extends State<MyApp> {
               ),
               ElevatedButton(
                 onPressed: () async {
-                  print(await controller1
-                      .pickFiles(mime: ['image/jpeg', 'image/png']));
+                  final files = await controller1
+                      .pickFiles(mime: ['image/jpeg', 'image/png']);
+                  print(files);
+                  for (final f in files) {
+                    print(await controller1.getFilename(f));
+                    print(controller1.getFileStream(f));
+                  }
                 },
                 child: const Text('Pick file'),
               ),
